@@ -1,7 +1,7 @@
-import { useState, useEffect, use, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMatch } from "~/contexts/matchContext";
 import { LoadingScreen } from "~/components/LoadingScreen";
-import { time } from "console";
+import { useNavigate } from "react-router";
 
 interface Match {
   matchId: number;
@@ -396,6 +396,8 @@ export default function MatchPage() {
   const lastActivityRef = useRef<number>(Date.now());
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const navigate = useNavigate();
+
   const fetchSlots = async () => {
     const slots = (await getAllSlots()) as CardDetails[];
     // Transform slots into 2D array for grid representation
@@ -425,8 +427,18 @@ export default function MatchPage() {
         INACTIVITY_LIMIT
       );
       if (timeSinceLastActivity >= INACTIVITY_LIMIT && !finished) {
-        cancelMatch();
-        window.location.href = "/game";
+        import("sweetalert2").then(({ default: Swal }) => {
+          Swal.fire({
+            title: "Partida cancelada",
+            text: "La partida ha sido cancelada por inactividad (1 minuto sin movimientos)",
+            icon: "warning",
+            confirmButtonText: "Volver al menú",
+            allowOutsideClick: false,
+          }).then(() => {
+            cancelMatch();
+            navigate("/game");
+          });
+        });
       }
     };
 
@@ -626,7 +638,7 @@ export default function MatchPage() {
         <button
           className="mt-6 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-lg hover:bg-green-600 transition-colors"
           onClick={() => {
-            window.location.href = "/game";
+            navigate("/game");
           }}
         >
           Volver
