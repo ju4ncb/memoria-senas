@@ -239,6 +239,8 @@ async function findMatch(req: VercelRequest, res: VercelResponse) {
       { expiresIn: "1h" }
     );
 
+    res.setHeader("Cache-Control", "no-store");
+
     res.setHeader(
       "Set-Cookie",
       `match_session_token=${matchToken}; HttpOnly; Path=/; Max-Age=3600`
