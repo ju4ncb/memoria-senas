@@ -47,7 +47,7 @@ const ProfileCard = ({
 
 const Leaderboard = () => {
   const [topPlayers, setTopPlayers] = useState<
-    Array<{ username: string; score: number }>
+    Array<{ username: string; total_score: number }>
   >([]);
 
   useEffect(() => {
@@ -83,17 +83,29 @@ const Leaderboard = () => {
       className="flex flex-col items-center mt-6 text-red-100"
       style={{ width: "min(600px, 90%)" }}
     >
-      <h2 className="text-xl font-bold mb-2 border-b border-red-100 w-full text-center pb-2">
+      <h2 className="text-2xl font-bold mb-4 border-b-2 border-yellow-400 w-full text-center pb-3">
+        <Trophy className="inline-block mr-2 text-yellow-400" size={28} />
         <span>Leaderboard</span>
-        <Trophy className="inline-block ml-2 text-yellow-400" />
       </h2>
-      <ul className="mt-4 bg-white/10 text-red-50 p-4 rounded-lg shadow-lg w-full mx-auto">
+      <ul className="mt-2 bg-white/20 text-red-50 rounded-lg shadow-lg w-full mx-auto overflow-hidden">
         {topPlayers.map((player, index) => (
           <li
             key={index}
-            className={`mb-2 ${index % 2 === 0 ? "bg-white/10" : ""}`}
+            className={`flex justify-between items-center px-6 py-4 transition-colors hover:bg-white/30 ${
+              index !== topPlayers.length - 1 ? "border-b border-white/20" : ""
+            } ${index === 0 ? "bg-yellow-400/20" : index === 1 ? "bg-gray-300/20" : index === 2 ? "bg-orange-400/20" : "bg-white/10"}`}
           >
-            {player.username}: {player.score}
+            <div className="flex items-center gap-3">
+              <span
+                className={`font-bold text-lg ${index < 3 ? "text-yellow-300" : "text-red-200"}`}
+              >
+                #{index + 1}
+              </span>
+              <span className="font-semibold text-lg">{player.username}</span>
+            </div>
+            <span className="font-bold text-xl text-yellow-300">
+              {player.total_score}
+            </span>
           </li>
         ))}
       </ul>

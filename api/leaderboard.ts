@@ -14,11 +14,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
   try {
     const connection = await mysql.createConnection(dbConfig);
+
     const [rows] = await connection.execute(
-      `SELECT GU.username, M.player1_score FROM guest_users GU 
-      JOIN matches M ON GU.user_id = M.player1_id 
-      UNION ALL SELECT GU.username, M.player2_score FROM guest_users GU 
-      JOIN matches M ON GU.user_id = M.player2_id ORDER BY player1_score DESC LIMIT 10`
+      `SELECT GU.user_id, GU.username, SUM(scores.score) as total_score
+      FROM guest_users GU
+      JOIN (
+      SELECT player1_id as user_id, player1_score as score FROM matches
+      UNION ALL
+      SELECT player2_id as user_id, player2_score as score FROM matches
+      ) scores ON GU.user_id = scores.user_id
+      GROUP BY GU.user_id, GU.username
+      ORDER BY total_score DESC
+      LIMIT 10`
     );
     await connection.end();
     res.status(200).json({ topPlayers: rows });
