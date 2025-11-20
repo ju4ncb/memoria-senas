@@ -284,7 +284,9 @@ const GridCards = ({
         }
       } else {
         // Not a match - hide cards after a delay backend call for turn change
-        await resetSlots([firstCard.slotId, secondCard.slotId]);
+        setTimeout(async () => {
+          await resetSlots([firstCard.slotId, secondCard.slotId]);
+        }, 1000);
 
         setTimeout(() => {
           const resetCards = cards.map((r) => r.slice());
