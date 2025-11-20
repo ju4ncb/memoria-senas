@@ -395,6 +395,7 @@ export default function MatchPage() {
   const lastChangeRef = useRef<number>(Date.now());
   const lastActivityRef = useRef<number>(Date.now());
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isCancellingRef = useRef<boolean>(false); // Prevent multiple cancellations
 
   const navigate = useNavigate();
 
@@ -412,42 +413,54 @@ export default function MatchPage() {
     setCards(grid);
   };
 
+  // Separate useEffect for inactivity timeout
   useEffect(() => {
-    if (!match) return;
+    if (!match || finished || isCancellingRef.current) return;
 
-    // Inactivity timeout: cancel match after 1 minute of no moves
     const INACTIVITY_LIMIT = 1 * 60 * 1000; // 1 minute in milliseconds
 
     const checkInactivity = () => {
+      // Don't check if already cancelling
+      if (isCancellingRef.current || finished) return;
+
       const timeSinceLastActivity = Date.now() - lastActivityRef.current;
       console.log(
-        "Checking inactivity...",
-        timeSinceLastActivity >= INACTIVITY_LIMIT && !finished,
-        timeSinceLastActivity,
-        INACTIVITY_LIMIT
+        "Checking inactivity - Time elapsed:",
+        Math.floor(timeSinceLastActivity / 1000),
+        "seconds"
       );
-      if (timeSinceLastActivity >= INACTIVITY_LIMIT && !finished) {
-        setFinished(true);
-        import("sweetalert2").then(({ default: Swal }) => {
-          Swal.fire({
-            title: "Partida cancelada",
-            text: "La partida ha sido cancelada por inactividad (1 minuto sin movimientos)",
-            icon: "warning",
-            confirmButtonText: "Volver al menú",
-            allowOutsideClick: false,
-          }).then(() => {
-            cancelMatch();
-            navigate("/game");
-          });
-        });
+
+      if (timeSinceLastActivity >= INACTIVITY_LIMIT) {
+        // Mark as cancelling to prevent multiple executions
+        isCancellingRef.current = true;
+
+        // Clear the interval immediately
+        if (inactivityTimeoutRef.current) {
+          clearInterval(inactivityTimeoutRef.current);
+          inactivityTimeoutRef.current = null;
+        }
+
+        console.log("INACTIVITY DETECTED - Cancelling match");
+
+        // Cancel match and redirect
+        cancelMatch();
+        window.location.href = "/game";
       }
     };
 
-    // Check immediately on mount
-    checkInactivity();
-
-    // Then check every 10 seconds (more responsive than 30s)
+    // Start checking every 10 seconds
     inactivityTimeoutRef.current = setInterval(checkInactivity, 10000);
+
+    return () => {
+      if (inactivityTimeoutRef.current) {
+        clearInterval(inactivityTimeoutRef.current);
+        inactivityTimeoutRef.current = null;
+      }
+    };
+  }, [match, finished, cancelMatch]);
+
+  useEffect(() => {
+    if (!match) return;
 
     const checkPlayerTurn = () => {
       fetch("/api/match?action=get-current-player", {
