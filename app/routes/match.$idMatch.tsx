@@ -104,11 +104,13 @@ const HeaderMatch = ({
   isItFirstPlayerTurn,
   player1Score,
   player2Score,
+  finished,
 }: {
   currentMatch: MatchFull;
   isItFirstPlayerTurn: boolean;
   player1Score: number;
   player2Score: number;
+  finished: boolean;
 }) => {
   return (
     <div className="flex flex-col lg:flex-row justify-around items-center gap-4 mb-4 bg-white/10 p-4 rounded-lg shadow-md">
@@ -117,10 +119,17 @@ const HeaderMatch = ({
           Detalles de la partida
         </h1>
         <h2>
-          Turno de:{" "}
-          {isItFirstPlayerTurn
-            ? currentMatch.player1username
-            : currentMatch.player2username}
+          {finished
+            ? `Partida terminada, ganador: ${
+                isItFirstPlayerTurn
+                  ? currentMatch.player1username
+                  : currentMatch.player2username
+              }`
+            : `Turno de: ${
+                isItFirstPlayerTurn
+                  ? currentMatch.player1username
+                  : currentMatch.player2username
+              }`}
         </h2>
       </div>
       <PlayerVSPlayer
@@ -168,18 +177,24 @@ const GridCards = ({
   cards,
   isItFirstPlayerTurn,
   amIPlayerOne,
+  finished,
   setCards,
   flipSlot,
   resetSlots,
   markSlotsAsMatched,
+  setMatched,
+  setFinished,
 }: {
   cards: CardDetails[][];
   isItFirstPlayerTurn: boolean;
   amIPlayerOne: boolean;
+  finished: boolean;
   setCards: React.Dispatch<React.SetStateAction<CardDetails[][]>>;
   flipSlot: (slotId: number) => Promise<void>;
   resetSlots: (slotIds: number[]) => Promise<void>;
   markSlotsAsMatched: (slotIds: number[]) => Promise<void>;
+  setMatched: React.Dispatch<React.SetStateAction<boolean>>;
+  setFinished: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const [flippedCard1, setFlippedCard1] = useState<{
     row: number;
@@ -204,8 +219,9 @@ const GridCards = ({
     // If both cards are already flipped, do nothing
     if (flippedCard1 && flippedCard2) return;
 
-    // Check if it's the player's turn
+    // Check if it's the player's turn or if the game is finished
     if (
+      finished ||
       (amIPlayerOne && !isItFirstPlayerTurn) ||
       (!amIPlayerOne && isItFirstPlayerTurn)
     ) {
@@ -228,11 +244,21 @@ const GridCards = ({
       const secondCard = newCards[row][col];
       if (firstCard.value === secondCard.value) {
         // It's a match
+        setMatched(true);
+        setTimeout(() => setMatched(false), 250);
         newCards[flippedCard1.row][flippedCard1.col].state = "matched";
         newCards[row][col].state = "matched";
         await markSlotsAsMatched([firstCard.slotId, secondCard.slotId]);
         setFlippedCard1(null);
         setFlippedCard2(null);
+
+        // Check if all cards are matched
+        const allMatched = newCards.every((r) =>
+          r.every((c) => c.state === "matched")
+        );
+        if (allMatched) {
+          setFinished(true);
+        }
       } else {
         // Not a match - hide cards after a delay
         await resetSlots([firstCard.slotId, secondCard.slotId]);
@@ -281,29 +307,38 @@ const MatchContent = ({
   cards,
   isItFirstPlayerTurn,
   amIPlayerOne,
+  finished,
+  setMatched,
   setCards,
   flipSlot,
   resetSlots,
   markSlotsAsMatched,
+  setFinished,
 }: {
   cards: CardDetails[][];
   isItFirstPlayerTurn: boolean;
   amIPlayerOne: boolean;
+  finished: boolean;
+  setMatched: React.Dispatch<React.SetStateAction<boolean>>;
   setCards: React.Dispatch<React.SetStateAction<CardDetails[][]>>;
   flipSlot: (slotId: number) => Promise<void>;
   resetSlots: (slotIds: number[]) => Promise<void>;
   markSlotsAsMatched: (slotIds: number[]) => Promise<void>;
+  setFinished: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   return (
     <div className="mt-6">
       <GridCards
         cards={cards}
+        setMatched={setMatched}
         setCards={setCards}
         flipSlot={flipSlot}
         resetSlots={resetSlots}
         markSlotsAsMatched={markSlotsAsMatched}
         isItFirstPlayerTurn={isItFirstPlayerTurn}
         amIPlayerOne={amIPlayerOne}
+        finished={finished}
+        setFinished={setFinished}
       />
     </div>
   );
@@ -321,6 +356,22 @@ export default function MatchPage() {
   const [isItFirstPlayerTurn, setIsItFirstPlayerTurn] =
     useState<boolean>(false);
   const [amIPlayerOne, setAmIPlayerOne] = useState<boolean>(false);
+  const [matched, setMatched] = useState<boolean>(false);
+  const [finished, setFinished] = useState<boolean>(false);
+
+  const fetchSlots = async () => {
+    const slots = (await getAllSlots()) as CardDetails[];
+    // Transform slots into 2D array for grid representation
+    const grid: CardDetails[][] = [];
+    for (let i = 0; i < 6; i++) {
+      for (let j = 0; j < 6; j++) {
+        if (!grid[i]) grid[i] = [];
+        const slot = slots.find((s) => s.xPosition === i && s.yPosition === j);
+        grid[i][j] = slot!;
+      }
+    }
+    setCards(grid);
+  };
 
   useEffect(() => {
     if (!match) return;
@@ -340,11 +391,13 @@ export default function MatchPage() {
     const updateMatch = () => {
       if (!match) return;
       if (
-        (isItFirstPlayerTurn && amIPlayerOne) ||
-        (!isItFirstPlayerTurn && !amIPlayerOne)
+        ((isItFirstPlayerTurn && amIPlayerOne) ||
+          (!isItFirstPlayerTurn && !amIPlayerOne)) &&
+        matched
       )
         return;
       getCurrentMatch();
+      fetchSlots();
     };
 
     // Initial check
@@ -358,7 +411,7 @@ export default function MatchPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [match, getCurrentMatch]);
+  }, [match, getCurrentMatch, matched, isItFirstPlayerTurn, amIPlayerOne]);
 
   const [cards, setCards] = useState<CardDetails[][]>([]);
   const [player1Score, setPlayer1Score] = useState<number>(0); // They are changed in the backend when marking slots as matched
@@ -420,21 +473,7 @@ export default function MatchPage() {
 
     // Fetch all slots from the matchId
     if (!match) return;
-    const fetchSlots = async () => {
-      const slots = (await getAllSlots()) as CardDetails[];
-      // Transform slots into 2D array for grid representation
-      const grid: CardDetails[][] = [];
-      for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < 6; j++) {
-          if (!grid[i]) grid[i] = [];
-          const slot = slots.find(
-            (s) => s.xPosition === i && s.yPosition === j
-          );
-          grid[i][j] = slot!;
-        }
-      }
-      setCards(grid);
-    };
+
     fetchSlots();
     setPlayer1Score(match.player1Score);
     setPlayer2Score(match.player2Score);
@@ -479,6 +518,7 @@ export default function MatchPage() {
     <div className="container mx-auto p-4">
       <HeaderMatch
         currentMatch={currentMatch}
+        finished={finished}
         isItFirstPlayerTurn={isItFirstPlayerTurn}
         player1Score={player1Score}
         player2Score={player2Score}
@@ -491,6 +531,9 @@ export default function MatchPage() {
         flipSlot={flipSlot}
         resetSlots={resetSlots}
         markSlotsAsMatched={markSlotsAsMatched}
+        setMatched={setMatched}
+        finished={finished}
+        setFinished={setFinished}
       />
     </div>
   );
