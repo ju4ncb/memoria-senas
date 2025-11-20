@@ -307,9 +307,9 @@ const GridCards = ({
       {cards.flat().map(({ value, imageUrl, state }, index) => (
         <div
           key={index}
-          className={`aspect-square bg-gray-300 rounded-md flex items-center justify-center ${
+          className={`aspect-square rounded-md flex items-center justify-center transition-colors duration-300 ${
             state === "matched" ? "border-4 border-green-500" : ""
-          } ${state === "hidden" && "cursor-pointer"}`}
+          } ${state === "hidden" && "cursor-pointer"} ${amIPlayerOne && !isItFirstPlayerTurn ? "bg-gray-400" : "bg-gray-200"}`}
           onClick={() => handleCardAction(index)}
         >
           {state === "hidden" ? (
