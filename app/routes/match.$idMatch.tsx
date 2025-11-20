@@ -400,7 +400,7 @@ export default function MatchPage() {
       if (
         ((isItFirstPlayerTurn && amIPlayerOne) ||
           (!isItFirstPlayerTurn && !amIPlayerOne)) &&
-        matched
+        !matched
       )
         return;
       getCurrentMatch();
