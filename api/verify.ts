@@ -14,6 +14,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const secret = process.env.GUEST_SESSION_JWT_SECRET!;
     const decoded = jwt.verify(token, secret) as {
+      userId: string;
       username: string;
       randomProfileIconNumber: string;
     };

@@ -1,10 +1,13 @@
-import type { Route } from "./+types/home";
+import type { Route } from "./+types/_index";
 import GreetingHome from "~/components/GreetingHome";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Señas salvajes" },
-    { name: "description", content: "¡Bienvenido a Señas Salvajes!" },
+    { title: "Memoria de Señas" },
+    {
+      name: "description",
+      content: "¡Bienvenido al juego de Memoria de Señas!",
+    },
   ];
 }
 
@@ -12,8 +15,6 @@ export default function Home() {
   return (
     <>
       <GreetingHome />
-      <main></main>
-      <footer></footer>
     </>
   );
 }

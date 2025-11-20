@@ -1,14 +1,18 @@
 import { createContext, useState, useEffect, useContext } from "react";
+import Swal from "sweetalert2";
 
 interface GuestUser {
+  userId: number;
   username: string;
   randomProfileIconNumber: string;
 }
 
 interface GuestUserContextType {
-  user: GuestUser | null | undefined;
+  guestUser: GuestUser | null | undefined;
   login: () => void;
   logout: () => void;
+  verifyIfInMatch: () => Promise<number>;
+  joinMatch: (matchId: string) => void;
 }
 
 const GuestUserContext = createContext<GuestUserContextType | null>(null);
@@ -26,14 +30,45 @@ export const GuestUserProvider = ({
     verifyGuestUser();
   }, []);
 
+  const joinMatch = async (matchId: string) => {
+    const res = await fetch("/api/match/join", {
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({ matchId }),
+    });
+    if (!res.ok) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo unir al juego. Por favor, intenta de nuevo.",
+      });
+    }
+  };
+
+  const verifyIfInMatch = async () => {
+    if (!guestUser) return -1;
+    const res = await fetch("/api/match/verify", {
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({ guestUserId: guestUser.userId }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.matchId as number;
+    }
+    return -1;
+  };
+
   const verifyGuestUser = async () => {
     const res = await fetch("/api/verify", {
+      method: "POST",
       credentials: "include",
     });
 
     if (res.ok) {
       const data = await res.json();
       setGuestUser({
+        userId: data.userId,
         username: data.username,
         randomProfileIconNumber: data.randomProfileIconNumber,
       });
@@ -53,7 +88,13 @@ export const GuestUserProvider = ({
 
   return (
     <GuestUserContext.Provider
-      value={{ user: guestUser, login: verifyGuestUser, logout }}
+      value={{
+        guestUser: guestUser,
+        verifyIfInMatch,
+        login: verifyGuestUser,
+        logout,
+        joinMatch,
+      }}
     >
       {children}
     </GuestUserContext.Provider>
