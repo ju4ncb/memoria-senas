@@ -140,28 +140,17 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Remove individual flipSlot - cards are managed client-side
   const flipSlot = async (slotId: number) => {
-    await fetch("/api/match?action=flip-slot", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ slotId }),
-    });
+    // No-op: card flips are now managed client-side only
   };
 
+  // Only reset slots when switching turns - batch the operation
   const resetSlots = async (slotIds: number[]) => {
-    await fetch("/api/match?action=reset-slots", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ slotIds }),
-    });
+    // No-op: resets are now managed client-side only
   };
 
+  // Only call backend when cards are actually matched (reduces calls significantly)
   const markSlotsAsMatched = async (slotIds: number[]) => {
     await fetch("/api/match?action=mark-slots-as-matched", {
       method: "POST",

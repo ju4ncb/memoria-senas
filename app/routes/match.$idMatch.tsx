@@ -224,23 +224,8 @@ const GridCards = ({
     flippedRef.current = { flippedCard1, flippedCard2, cards };
   }, [flippedCard1, flippedCard2, cards]);
 
-  useEffect(() => {
-    return () => {
-      const { flippedCard1, flippedCard2, cards } = flippedRef.current;
-
-      const slotsToReset: number[] = [];
-      if (flippedCard1) {
-        slotsToReset.push(cards[flippedCard1.row][flippedCard1.col].slotId);
-      }
-      if (flippedCard2) {
-        slotsToReset.push(cards[flippedCard2.row][flippedCard2.col].slotId);
-      }
-
-      if (slotsToReset.length > 0) {
-        resetSlots(slotsToReset);
-      }
-    };
-  }, []);
+  // Cleanup effect removed - no need to reset slots on unmount
+  // The other player will see the current state when they poll
 
   const handleCardAction = async (index: number) => {
     // Find card in grid
@@ -271,16 +256,16 @@ const GridCards = ({
 
     if (!flippedCard1) {
       setFlippedCard1({ row, col });
-      await flipSlot(cards[row][col].slotId);
+      // No backend call - manage state client-side
     } else if (!flippedCard2) {
       setFlippedCard2({ row, col });
-      await flipSlot(cards[row][col].slotId);
+      // No backend call - manage state client-side
 
       // Check for match
       const firstCard = newCards[flippedCard1.row][flippedCard1.col];
       const secondCard = newCards[row][col];
       if (firstCard.value === secondCard.value) {
-        // It's a match
+        // It's a match - ONLY call backend on actual match
         setMatched(true);
         setTimeout(() => setMatched(false), 250);
         newCards[flippedCard1.row][flippedCard1.col].state = "matched";
@@ -298,8 +283,7 @@ const GridCards = ({
           await finishMatch();
         }
       } else {
-        // Not a match - hide cards after a delay
-        await resetSlots([firstCard.slotId, secondCard.slotId]);
+        // Not a match - hide cards after a delay (no backend call)
         setTimeout(() => {
           const resetCards = cards.map((r) => r.slice());
           resetCards[flippedCard1.row][flippedCard1.col].state = "hidden";
@@ -436,14 +420,17 @@ export default function MatchPage() {
       if (!match) return;
       console.log(matched, isItFirstPlayerTurn, amIPlayerOne);
 
-      const shouldUpdate =
-        ((isItFirstPlayerTurn && amIPlayerOne) ||
-          (!isItFirstPlayerTurn && !amIPlayerOne)) &&
-        !matched;
+      // Only poll when it's NOT our turn (to see opponent's moves)
+      // When it's our turn, we manage state client-side
+      const isMyTurn =
+        (isItFirstPlayerTurn && amIPlayerOne) ||
+        (!isItFirstPlayerTurn && !amIPlayerOne);
 
       const timeSinceLastChange = Date.now() - lastChangeRef.current;
 
-      if (!shouldUpdate && timeSinceLastChange < 10000) {
+      // Skip polling if it's our turn and we're actively playing (matched state)
+      // or if we recently updated (< 10 seconds ago)
+      if ((isMyTurn && matched) || timeSinceLastChange < 10000) {
         return;
       }
 
@@ -457,11 +444,17 @@ export default function MatchPage() {
     checkPlayerTurn();
     updateMatch();
 
-    // Poll every second
+    // Optimized polling: only check when waiting for opponent
+    // Reduced from 2s to 3s to further reduce API calls
     const interval = setInterval(() => {
+      // Only check turn status frequently
       checkPlayerTurn();
-      updateMatch();
-    }, 2000);
+      // Only fetch full state when not our turn
+      if (!((isItFirstPlayerTurn && amIPlayerOne) ||
+            (!isItFirstPlayerTurn && !amIPlayerOne))) {
+        updateMatch();
+      }
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [match, getCurrentMatch, matched, isItFirstPlayerTurn, amIPlayerOne]);
