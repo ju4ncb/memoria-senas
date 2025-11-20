@@ -34,7 +34,7 @@ export const GuestUserProvider = ({
 
   const joinMatch = async (matchId: string) => {
     if (!guestUser) return;
-    const res = await fetch("/api/match/join", {
+    const res = await fetch("/api/match?action=join", {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({ matchId, player2Id: guestUser.userId }),
@@ -50,7 +50,7 @@ export const GuestUserProvider = ({
 
   const verifyIfInMatch = async () => {
     if (!guestUser) return -1;
-    const res = await fetch("/api/match/verify", {
+    const res = await fetch("/api/match?action=verify", {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({ guestUserId: guestUser.userId }),

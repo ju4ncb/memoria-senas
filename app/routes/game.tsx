@@ -156,7 +156,7 @@ export default function Game() {
       return;
     }
     // Otherwise, see if there is any available match to join
-    const res = await fetch("/api/match/find", {
+    const res = await fetch("/api/match?action=find", {
       method: "GET",
       credentials: "include",
     });

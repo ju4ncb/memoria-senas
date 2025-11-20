@@ -33,7 +33,7 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const createMatch = async (player1Id: number) => {
-    const res = await fetch("/api/match/create", {
+    const res = await fetch("/api/match?action=create", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -50,7 +50,7 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const getMatchById = async (matchId: number) => {
-    const res = await fetch(`/api/match/get-match?matchId=${matchId}`, {
+    const res = await fetch(`/api/match?action=get-match&matchId=${matchId}`, {
       method: "GET",
       credentials: "include",
     });
@@ -68,7 +68,7 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const finishMatch = async (matchId: number) => {
-    const res = await fetch("/api/match/finish", {
+    const res = await fetch("/api/match?action=finish", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -89,7 +89,7 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const cancelMatch = async (matchId: number) => {
-    const res = await fetch("/api/match/cancel", {
+    const res = await fetch("/api/match?action=cancel", {
       method: "POST",
       credentials: "include",
       headers: {
