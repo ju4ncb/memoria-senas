@@ -173,6 +173,12 @@ const HeaderMatch = ({
             </span>
           );
         })()}
+        {finished && (
+          <span>
+            {" "}
+            (finalizado, <a href="/game">volver aquí</a>)
+          </span>
+        )}
       </div>
     </div>
   );
@@ -574,7 +580,7 @@ export default function MatchPage() {
         setFinished={setFinished}
         finishMatch={finishMatch}
       />
-      {finished && (
+      <div className="flex justify-center">
         <button
           className="mt-6 px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-lg hover:bg-green-600 transition-colors"
           onClick={() => {
@@ -583,7 +589,7 @@ export default function MatchPage() {
         >
           Volver
         </button>
-      )}
+      </div>
     </div>
   );
 }
