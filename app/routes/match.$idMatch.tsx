@@ -441,6 +441,7 @@ export default function MatchPage() {
         return;
       getCurrentMatch();
       fetchSlots();
+      setFinished(match.state === "finished");
     };
 
     // Initial check
