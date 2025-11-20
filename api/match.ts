@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // JOIN MATCH
       // -------------------------------------------------
       case "join":
-        if (req.method !== "POST")
+        if (req.method !== "GET")
           return res.status(405).json({ message: "Method not allowed" });
 
         return joinMatch(req, res);
@@ -155,35 +155,61 @@ async function findMatch(req: VercelRequest, res: VercelResponse) {
   if (!rows || (Array.isArray(rows) && rows.length === 0))
     return res.status(404).json({ message: "No available matches found" });
 
+  const matchId = (Array.isArray(rows) ? rows[0] : (rows as any)).match_id;
+
+  // Save matchId in session as well
+  const matchToken = jwt.sign(
+    { matchId },
+    process.env.GUEST_SESSION_JWT_SECRET!,
+    { expiresIn: "1h" }
+  );
+
+  res.setHeader(
+    "Set-Cookie",
+    `match_session_token=${matchToken}; HttpOnly; Path=/; Max-Age=3600`
+  );
+
   return res.status(200).json({
-    matchId: (Array.isArray(rows) ? rows[0] : (rows as any)).match_id,
+    matchId,
   });
 }
 
 async function joinMatch(req: VercelRequest, res: VercelResponse) {
   const pool = getDB();
-  const { matchId } = req.body;
-  const token = req.cookies?.["guest_session_token"];
+  const guestSessionToken = req.cookies?.["guest_session_token"];
+  const matchToken = req.cookies?.["match_session_token"];
 
-  if (!token) {
-    return res.status(401).json({ message: "No token provided" });
+  if (!guestSessionToken) {
+    return res.status(401).json({ message: "No guest session token provided" });
   }
 
-  let decoded: { userId: string };
+  if (!matchToken) {
+    return res.status(400).json({ message: "No match token provided" });
+  }
+
+  let userDecodedData: { userId: string };
   try {
     const secret = process.env.GUEST_SESSION_JWT_SECRET!;
-    decoded = jwt.verify(token, secret) as {
+    userDecodedData = jwt.verify(guestSessionToken, secret) as {
       userId: string;
     };
   } catch {
     return res.status(401).json({ message: "Invalid token" });
   }
 
-  const guestUserId = decoded.userId;
+  const guestUserId = userDecodedData.userId;
 
-  return res
-    .status(500)
-    .json({ message: "Debug joinMatch", guestUserId, matchId });
+  let decodedMatch: { matchId: string };
+  try {
+    const secret = process.env.GUEST_SESSION_JWT_SECRET!;
+    decodedMatch = jwt.verify(matchToken, secret) as {
+      matchId: string;
+    };
+  } catch {
+    return res.status(401).json({ message: "Invalid match token" });
+  }
+
+  const matchId = decodedMatch.matchId;
 
   await pool.execute(
     "UPDATE matches SET player2_id = ?, state = ? WHERE match_id = ? AND state = ?",

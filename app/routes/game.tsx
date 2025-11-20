@@ -160,7 +160,7 @@ export default function Game() {
       "matchIdCreated:",
       matchIdCreated
     );
-    if (!isLookingForMatch || matchIdCreated !== -1) return;
+    if (!isLookingForMatch || matchIdCreated === -1) return;
     const interval = setInterval(async () => {
       const matchId = await verifyIfSomeoneJoined();
       if (matchId !== -1) {
@@ -189,7 +189,7 @@ export default function Game() {
     if (res.ok) {
       const data = await res.json();
       if (data.matchId) {
-        await joinMatch(data.matchId);
+        await joinMatch();
         navigate(`/match/${data.matchId}`);
         return;
       }

@@ -15,7 +15,7 @@ interface GuestUserContextType {
   logout: () => void;
   verifyIfInMatch: () => Promise<number>;
   verifyIfSomeoneJoined: () => Promise<number>;
-  joinMatch: (matchId: number) => Promise<void>;
+  joinMatch: () => Promise<void>;
 }
 
 const GuestUserContext = createContext<GuestUserContextType | null>(null);
@@ -33,13 +33,11 @@ export const GuestUserProvider = ({
     verifyGuestUser();
   }, []);
 
-  const joinMatch = async (matchId: number) => {
-    console.log("Joining match:", matchId);
+  const joinMatch = async () => {
     if (!guestUser) return;
     const res = await fetch("/api/match?action=join", {
-      method: "POST",
+      method: "GET",
       credentials: "include",
-      body: JSON.stringify({ matchId }),
     });
     if (!res.ok) {
       Swal.fire({
