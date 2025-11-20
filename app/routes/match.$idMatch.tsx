@@ -277,7 +277,9 @@ const GridCards = ({
           await finishMatch();
         }
       } else {
-        // Not a match - hide cards after a delay (no backend call)
+        // Not a match - hide cards after a delay backend call for turn change
+        await resetSlots([firstCard.slotId, secondCard.slotId]);
+
         setTimeout(() => {
           const resetCards = cards.map((r) => r.slice());
           resetCards[flippedCard1.row][flippedCard1.col].state = "hidden";
@@ -453,7 +455,7 @@ export default function MatchPage() {
       ) {
         updateMatch();
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [match, getCurrentMatch, matched, isItFirstPlayerTurn, amIPlayerOne]);
