@@ -470,7 +470,7 @@ async function getCurrentMatch(req: VercelRequest, res: VercelResponse) {
   const matchId = decodedMatch.matchId;
 
   const [rows] = await pool.execute(
-    `SELECT M.*, GU.username AS player1_name, GU2.username AS player2_name, GU.icon_number AS player1_icon_number, GU2.icon_number AS player2_icon_number
+    `SELECT M.*, GU.username AS player1_name, GU2.username AS player2_name, GU.profile_icon_number AS player1_icon_number, GU2.profile_icon_number AS player2_icon_number
      FROM matches M
      INNER JOIN guest_users GU ON M.player1_id = GU.user_id 
      LEFT JOIN guest_users GU2 ON M.player2_id = GU2.user_id 
