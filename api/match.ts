@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import mysql from "mysql2/promise";
+import jwt from "jsonwebtoken";
 
 function getDB() {
   return mysql.createPool({
@@ -51,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // VERIFY MATCH
       // -------------------------------------------------
       case "verify":
-        if (req.method !== "POST")
+        if (req.method !== "GET")
           return res.status(405).json({ message: "Method not allowed" });
 
         return verifyMatch(req, res);
@@ -119,7 +120,24 @@ async function createMatch(req: VercelRequest, res: VercelResponse) {
 
 async function findMatch(req: VercelRequest, res: VercelResponse) {
   const pool = getDB();
-  const excludePlayerId = req.query.excludePlayerId;
+  const token = req.cookies?.["guest_session_token"];
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  let decoded: { userId: string };
+  try {
+    const secret = process.env.GUEST_SESSION_JWT_SECRET!;
+    decoded = jwt.verify(token, secret) as {
+      userId: string;
+    };
+  } catch {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+
+  const excludePlayerId = decoded.userId;
+
   const [rows] = await pool.execute(
     "SELECT * FROM matches WHERE state = 'waiting' AND player1_id != ? LIMIT 1",
     [excludePlayerId]
@@ -135,11 +153,26 @@ async function findMatch(req: VercelRequest, res: VercelResponse) {
 
 async function joinMatch(req: VercelRequest, res: VercelResponse) {
   const pool = getDB();
-  const { matchId, player2Id } = req.body;
+  const { matchId } = req.body;
+  const token = req.cookies?.["guest_session_token"];
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  let decoded: { userId: string };
+  try {
+    const secret = process.env.GUEST_SESSION_JWT_SECRET!;
+    decoded = jwt.verify(token, secret) as {
+      userId: string;
+    };
+  } catch {
+    return res.status(401).json({ message: "Invalid token" });
+  }
 
   await pool.execute(
     "UPDATE matches SET player2_id = ?, state = ? WHERE match_id = ? AND state = ?",
-    [player2Id, "playing", matchId, "waiting"]
+    [decoded.userId, "playing", matchId, "waiting"]
   );
 
   return res.status(200).json({ message: "Joined match successfully" });
@@ -147,7 +180,22 @@ async function joinMatch(req: VercelRequest, res: VercelResponse) {
 
 async function verifyMatch(req: VercelRequest, res: VercelResponse) {
   const pool = getDB();
-  const { guestUserId } = req.body;
+  const token = req.cookies?.["guest_session_token"];
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  let decoded: { userId: string };
+  try {
+    const secret = process.env.GUEST_SESSION_JWT_SECRET!;
+    decoded = jwt.verify(token, secret) as {
+      userId: string;
+    };
+  } catch {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+  const guestUserId = decoded.userId;
 
   const [rows] = await pool.execute(
     "SELECT * FROM matches WHERE (player1_id = ? OR player2_id = ?) AND state = 'playing'",

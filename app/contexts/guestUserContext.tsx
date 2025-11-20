@@ -37,7 +37,7 @@ export const GuestUserProvider = ({
     const res = await fetch("/api/match?action=join", {
       method: "POST",
       credentials: "include",
-      body: JSON.stringify({ matchId, player2Id: guestUser.userId }),
+      body: JSON.stringify({ matchId }),
     });
     if (!res.ok) {
       Swal.fire({
@@ -51,9 +51,8 @@ export const GuestUserProvider = ({
   const verifyIfInMatch = async () => {
     if (!guestUser) return -1;
     const res = await fetch("/api/match?action=verify", {
-      method: "POST",
+      method: "GET",
       credentials: "include",
-      body: JSON.stringify({ guestUserId: guestUser.userId }),
     });
     if (res.ok) {
       const data = await res.json();
