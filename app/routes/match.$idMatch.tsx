@@ -196,6 +196,7 @@ const GridCards = ({
   setMatched,
   setFinished,
   finishMatch,
+  lastActivityRef,
 }: {
   cards: CardDetails[][];
   isItFirstPlayerTurn: boolean;
@@ -208,6 +209,7 @@ const GridCards = ({
   setMatched: React.Dispatch<React.SetStateAction<boolean>>;
   setFinished: React.Dispatch<React.SetStateAction<boolean>>;
   finishMatch: () => Promise<void>;
+  lastActivityRef: React.MutableRefObject<number>;
 }) => {
   const [flippedCard1, setFlippedCard1] = useState<{
     row: number;
@@ -222,6 +224,9 @@ const GridCards = ({
   // The other player will see the current state when they poll
 
   const handleCardAction = async (index: number) => {
+    // Update activity timestamp on every card click
+    lastActivityRef.current = Date.now();
+
     // Find card in grid
     const row = Math.floor(index / cards[0].length);
     const col = index % cards[0].length;
@@ -333,6 +338,7 @@ const MatchContent = ({
   markSlotsAsMatched,
   setFinished,
   finishMatch,
+  lastActivityRef,
 }: {
   cards: CardDetails[][];
   isItFirstPlayerTurn: boolean;
@@ -345,6 +351,7 @@ const MatchContent = ({
   markSlotsAsMatched: (slotIds: number[]) => Promise<void>;
   setFinished: React.Dispatch<React.SetStateAction<boolean>>;
   finishMatch: () => Promise<void>;
+  lastActivityRef: React.MutableRefObject<number>;
 }) => {
   return (
     <div className="mt-6">
@@ -360,6 +367,7 @@ const MatchContent = ({
         finished={finished}
         setFinished={setFinished}
         finishMatch={finishMatch}
+        lastActivityRef={lastActivityRef}
       />
     </div>
   );
@@ -374,6 +382,7 @@ export default function MatchPage() {
     resetSlots,
     markSlotsAsMatched,
     finishMatch,
+    cancelMatch,
   } = useMatch();
   const [isItFirstPlayerTurn, setIsItFirstPlayerTurn] =
     useState<boolean>(false);
@@ -383,6 +392,8 @@ export default function MatchPage() {
 
   // Move useRef to top level of component (cannot be inside useEffect)
   const lastChangeRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(Date.now());
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchSlots = async () => {
     const slots = (await getAllSlots()) as CardDetails[];
@@ -400,6 +411,19 @@ export default function MatchPage() {
 
   useEffect(() => {
     if (!match) return;
+
+    // Inactivity timeout: cancel match after 1 minute of no moves
+    const INACTIVITY_LIMIT = 1 * 60 * 1000; // 1 minute in milliseconds
+
+    const checkInactivity = () => {
+      const timeSinceLastActivity = Date.now() - lastActivityRef.current;
+      if (timeSinceLastActivity >= INACTIVITY_LIMIT && !finished) {
+        cancelMatch();
+        window.location.href = "/game";
+      }
+    };
+
+    inactivityTimeoutRef.current = setInterval(checkInactivity, 30000); // Check every 30 seconds
 
     const checkPlayerTurn = () => {
       fetch("/api/match?action=get-current-player", {
@@ -457,8 +481,20 @@ export default function MatchPage() {
       }
     }, 3000);
 
-    return () => clearInterval(interval);
-  }, [match, getCurrentMatch, matched, isItFirstPlayerTurn, amIPlayerOne]);
+    return () => {
+      clearInterval(interval);
+      if (inactivityTimeoutRef.current) {
+        clearInterval(inactivityTimeoutRef.current);
+      }
+    };
+  }, [
+    match,
+    getCurrentMatch,
+    matched,
+    isItFirstPlayerTurn,
+    amIPlayerOne,
+    finished,
+  ]);
 
   const [cards, setCards] = useState<CardDetails[][]>([]);
   const [player1Score, setPlayer1Score] = useState<number>(0); // They are changed in the backend when marking slots as matched
@@ -583,6 +619,7 @@ export default function MatchPage() {
         finished={finished}
         setFinished={setFinished}
         finishMatch={finishMatch}
+        lastActivityRef={lastActivityRef}
       />
       <div className="flex justify-center">
         <button
