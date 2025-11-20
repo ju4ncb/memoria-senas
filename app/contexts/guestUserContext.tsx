@@ -15,7 +15,7 @@ interface GuestUserContextType {
   logout: () => void;
   verifyIfInMatch: () => Promise<number>;
   verifyIfSomeoneJoined: () => Promise<number>;
-  joinMatch: (matchId: string) => Promise<void>;
+  joinMatch: (matchId: number) => Promise<void>;
 }
 
 const GuestUserContext = createContext<GuestUserContextType | null>(null);
@@ -33,7 +33,8 @@ export const GuestUserProvider = ({
     verifyGuestUser();
   }, []);
 
-  const joinMatch = async (matchId: string) => {
+  const joinMatch = async (matchId: number) => {
+    console.log("Joining match:", matchId);
     if (!guestUser) return;
     const res = await fetch("/api/match?action=join", {
       method: "POST",

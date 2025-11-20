@@ -181,6 +181,10 @@ async function joinMatch(req: VercelRequest, res: VercelResponse) {
 
   const guestUserId = decoded.userId;
 
+  return res
+    .status(500)
+    .json({ message: "Debug joinMatch", guestUserId, matchId });
+
   await pool.execute(
     "UPDATE matches SET player2_id = ?, state = ? WHERE match_id = ? AND state = ?",
     [guestUserId, "playing", matchId, "waiting"]
