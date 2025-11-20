@@ -366,7 +366,7 @@ export default function MatchPage() {
       setCards(grid);
     };
     fetchSlots();
-  }, []);
+  }, [match]);
 
   useEffect(() => {
     if (!match) {
