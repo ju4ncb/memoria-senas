@@ -285,7 +285,7 @@ const GridCards = ({
           setCards(resetCards);
           setFlippedCard1(null);
           setFlippedCard2(null);
-        }, 3000);
+        }, 2000);
       }
     }
 
@@ -378,7 +378,7 @@ export default function MatchPage() {
   const [amIPlayerOne, setAmIPlayerOne] = useState<boolean>(false);
   const [matched, setMatched] = useState<boolean>(false);
   const [finished, setFinished] = useState<boolean>(false);
-  
+
   // Move useRef to top level of component (cannot be inside useEffect)
   const lastChangeRef = useRef<number>(Date.now());
 
@@ -453,7 +453,7 @@ export default function MatchPage() {
       ) {
         updateMatch();
       }
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [match, getCurrentMatch, matched, isItFirstPlayerTurn, amIPlayerOne]);
