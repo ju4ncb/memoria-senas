@@ -14,9 +14,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     database: process.env.DB_NAME,
   };
 
-  const connectionPromise = mysql.createConnection(dbConfig);
-
-  const connection = await connectionPromise;
+  let connection;
+  try {
+    connection = await mysql.createConnection(dbConfig);
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    return res.status(500).json({ message: "Database connection failed" });
+  }
 
   const { username } = req.body;
   const randomProfileIconNumber = (
