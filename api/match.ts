@@ -179,9 +179,11 @@ async function joinMatch(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ message: "Invalid token" });
   }
 
+  const guestUserId = decoded.userId;
+
   await pool.execute(
     "UPDATE matches SET player2_id = ?, state = ? WHERE match_id = ? AND state = ?",
-    [decoded.userId, "playing", matchId, "waiting"]
+    [guestUserId, "playing", matchId, "waiting"]
   );
 
   return res.status(200).json({ message: "Joined match successfully" });
