@@ -430,7 +430,11 @@ export default function MatchPage() {
       }
     };
 
-    inactivityTimeoutRef.current = setInterval(checkInactivity, 30000); // Check every 30 seconds
+    // Check immediately on mount
+    checkInactivity();
+
+    // Then check every 10 seconds (more responsive than 30s)
+    inactivityTimeoutRef.current = setInterval(checkInactivity, 10000);
 
     const checkPlayerTurn = () => {
       fetch("/api/match?action=get-current-player", {
@@ -490,18 +494,8 @@ export default function MatchPage() {
 
     return () => {
       clearInterval(interval);
-      if (inactivityTimeoutRef.current) {
-        clearInterval(inactivityTimeoutRef.current);
-      }
     };
-  }, [
-    match,
-    getCurrentMatch,
-    matched,
-    isItFirstPlayerTurn,
-    amIPlayerOne,
-    finished,
-  ]);
+  }, [match, getCurrentMatch, matched, isItFirstPlayerTurn, amIPlayerOne]);
 
   const [cards, setCards] = useState<CardDetails[][]>([]);
   const [player1Score, setPlayer1Score] = useState<number>(0); // They are changed in the backend when marking slots as matched
