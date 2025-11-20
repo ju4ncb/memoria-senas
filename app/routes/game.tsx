@@ -154,15 +154,21 @@ export default function Game() {
 
   // If looking for match, repeatedly verify if someone joined
   useEffect(() => {
+    console.log(
+      "isLookingForMatch:",
+      isLookingForMatch,
+      "matchIdCreated:",
+      matchIdCreated
+    );
     if (!isLookingForMatch || matchIdCreated !== -1) return;
     const interval = setInterval(async () => {
       const matchId = await verifyIfSomeoneJoined();
       if (matchId !== -1) {
         setMatchIdJoined(matchId);
         setIsLookingForMatch(false);
-        clearInterval(interval);
+        navigate(`/match/${matchId}`);
       }
-    }, 3000);
+    }, 500); // Check every 500 milliseconds
 
     return () => clearInterval(interval);
   }, [isLookingForMatch, matchIdCreated]);
