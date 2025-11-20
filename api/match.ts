@@ -118,8 +118,8 @@ async function createMatch(req: VercelRequest, res: VercelResponse) {
       { expiresIn: "24h" }
     );
 
-    const gridSize = 6;
-    const totalPairs = 18;
+    const gridSize = 4;
+    const totalPairs = 8;
 
     interface Card {
       value: number;
@@ -723,16 +723,17 @@ async function resetSlots(req: VercelRequest, res: VercelResponse) {
         .status(400)
         .json({ message: "Missing session tokens for turn change" });
     }
-    let decodedGuest: { userId: string };
+
     let decodedMatch: { matchId: string };
 
     try {
       const secret = process.env.GUEST_SESSION_JWT_SECRET!;
-      decodedGuest = jwt.verify(guestSessionToken, secret) as {
-        userId: string;
-      };
       decodedMatch = jwt.verify(matchToken, secret) as { matchId: string };
     } catch {
+      res.setHeader(
+        "Set-Cookie",
+        "match_session_token=; Max-Age=0; Path=/; HttpOnly"
+      );
       return res.status(401).json({ message: "Invalid session tokens" });
     }
 

@@ -403,8 +403,8 @@ export default function MatchPage() {
     const slots = (await getAllSlots()) as CardDetails[];
     // Transform slots into 2D array for grid representation
     const grid: CardDetails[][] = [];
-    for (let i = 0; i < 6; i++) {
-      for (let j = 0; j < 6; j++) {
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
         if (!grid[i]) grid[i] = [];
         const slot = slots.find((s) => s.xPosition === i && s.yPosition === j);
         grid[i][j] = slot!;
@@ -529,10 +529,10 @@ export default function MatchPage() {
 
   useEffect(() => {
     /* Debugging purpose: remove this block when backend is ready */
-    //// Step 1: pick 18 unique numbers from 1–22
+    //// Step 1: pick 8 unique numbers from 1–22
     //const allNums = Array.from({ length: 22 }, (_, i) => i + 1);
     //const chosen: number[] = [];
-    //const totalPairs = 18;
+    //const totalPairs = 8;
     //
     //while (chosen.length < totalPairs) {
     //  const idx = Math.floor(Math.random() * allNums.length);
@@ -570,12 +570,12 @@ export default function MatchPage() {
     //  [cardsFlat[i], cardsFlat[j]] = [cardsFlat[j], cardsFlat[i]];
     //}
     //
-    //// Step 3: convert to 2D grid (6x6)
+    //// Step 3: convert to 2D grid (4x4)
     //const debugCards: CardDetails[][] = [];
-    //for (let i = 0; i < 6; i++) {
+    //for (let i = 0; i < 4; i++) {
     //  debugCards[i] = [];
-    //  for (let j = 0; j < 6; j++) {
-    //    debugCards[i][j] = cardsFlat[i * 6 + j];
+    //  for (let j = 0; j < 4; j++) {
+    //    debugCards[i][j] = cardsFlat[i * 4 + j];
     //  }
     //}
     //setCards(debugCards);

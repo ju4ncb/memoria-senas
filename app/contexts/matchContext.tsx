@@ -61,6 +61,11 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
       const data = await res.json();
       setMatch(data);
       return data.matchId;
+    } else {
+      // Handle unauthorized access by clearing match state, if 400 there is no token, if 401 invalid token
+      if (res.status === 401 || res.status === 400) {
+        setMatch(null);
+      }
     }
     return "";
   };
@@ -74,12 +79,15 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
       const data = await res.json();
       setMatch(data);
     } else {
+      // Handle unauthorized access by clearing match state, if 400 there is no token, if 401 invalid token
+      if (res.status === 401 || res.status === 400) {
+        setMatch(null);
+      }
       Swal.fire({
         icon: "error",
         title: "Error",
         text: "No se pudo obtener la información del juego. Por favor, recarga la página e intenta de nuevo.",
       });
-      setMatch(null);
     }
   };
 
@@ -92,6 +100,10 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
       const data = await res.json();
       return data;
     } else {
+      // Handle unauthorized access by clearing match state
+      if (res.status === 401) {
+        setMatch(null);
+      }
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -137,6 +149,7 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Error",
         text: "No se pudo cancelar el juego. Por favor, recarga la página e intenta de nuevo.",
       });
+      setMatch(null);
     }
   };
 
@@ -147,7 +160,7 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Keep resetSlots - it changes turns in the backend
   const resetSlots = async (slotIds: number[]) => {
-    await fetch("/api/match?action=reset-slots", {
+    const res = await fetch("/api/match?action=reset-slots", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -155,11 +168,17 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
       },
       body: JSON.stringify({ slotIds }),
     });
+    if (!res.ok) {
+      // Handle unauthorized access by clearing match state, if 400 there is no token, if 401 invalid token
+      if (res.status === 401 || res.status === 400) {
+        setMatch(null);
+      }
+    }
   };
 
   // Only call backend when cards are actually matched (reduces calls significantly)
   const markSlotsAsMatched = async (slotIds: number[]) => {
-    await fetch("/api/match?action=mark-slots-as-matched", {
+    const res = await fetch("/api/match?action=mark-slots-as-matched", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -167,6 +186,12 @@ export const MatchProvider = ({ children }: { children: React.ReactNode }) => {
       },
       body: JSON.stringify({ slotIds }),
     });
+    if (!res.ok) {
+      // Handle unauthorized access by clearing match state, if 400 there is no token, if 401 invalid token
+      if (res.status === 401 || res.status === 400) {
+        setMatch(null);
+      }
+    }
   };
 
   return (
