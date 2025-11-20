@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useMatch } from "~/contexts/matchContext";
 import { LoadingScreen } from "~/components/LoadingScreen";
 import { useNavigate } from "react-router";
+import Footer from "~/components/Footer";
 
 interface Match {
   matchId: number;
@@ -664,6 +665,7 @@ export default function MatchPage() {
           Volver
         </button>
       </div>
+      <Footer />
     </div>
   );
 }

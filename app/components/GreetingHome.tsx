@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
 import InfoCard from "./InfoCard";
+import Footer from "./Footer";
 
 const GreetingHome = () => {
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +50,7 @@ const GreetingHome = () => {
           />
         </form>
       </div>
+      <Footer />
     </div>
   );
 };

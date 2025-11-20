@@ -8,6 +8,7 @@ import { LoadingScreen } from "~/components/LoadingScreen";
 import { useNavigate } from "react-router";
 
 import { Play, Trophy, X } from "lucide-react";
+import Footer from "~/components/Footer";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -245,6 +246,7 @@ export default function Game() {
         </button>
       )}
       <Leaderboard />
+      <Footer />
     </div>
   );
 }
