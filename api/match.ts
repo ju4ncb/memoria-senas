@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import mysql from "mysql2/promise";
 import jwt from "jsonwebtoken";
-import { Query } from "node_modules/mysql2/typings/mysql/lib/protocol/sequences/Query";
 
 function getDB() {
   return mysql.createPool({
