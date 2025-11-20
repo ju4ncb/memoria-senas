@@ -102,9 +102,13 @@ const PlayerVSPlayer = ({
 const HeaderMatch = ({
   currentMatch,
   isItFirstPlayerTurn,
+  player1Score,
+  player2Score,
 }: {
   currentMatch: MatchFull;
   isItFirstPlayerTurn: boolean;
+  player1Score: number;
+  player2Score: number;
 }) => {
   return (
     <div className="flex flex-col lg:flex-row justify-around items-center gap-4 mb-4 bg-white/10 p-4 rounded-lg shadow-md">
@@ -124,8 +128,8 @@ const HeaderMatch = ({
         player2username={currentMatch.player2username}
         player1IconNumber={currentMatch.player1IconNumber}
         player2IconNumber={currentMatch.player2IconNumber}
-        player1Score={currentMatch.player1Score}
-        player2Score={currentMatch.player2Score}
+        player1Score={player1Score}
+        player2Score={player2Score}
         isItFirstPlayerTurn={isItFirstPlayerTurn}
       />
       <div className="text-sm text-white/90 bg-white/10 px-3 py-1.5 rounded-full">
@@ -205,6 +209,8 @@ const GridCards = ({
       flipSlot(cards[row][col].slotId);
     } else if (!flippedCard2) {
       setFlippedCard2({ row, col });
+      flipSlot(cards[row][col].slotId);
+
       // Check for match
       const firstCard = newCards[flippedCard1.row][flippedCard1.col];
       const secondCard = newCards[row][col];
@@ -212,8 +218,12 @@ const GridCards = ({
         // It's a match
         newCards[flippedCard1.row][flippedCard1.col].state = "matched";
         newCards[row][col].state = "matched";
+        markSlotsAsMatched([firstCard.slotId, secondCard.slotId]);
+        setFlippedCard1(null);
+        setFlippedCard2(null);
       } else {
         // Not a match - hide cards after a delay
+        resetSlots([firstCard.slotId, secondCard.slotId]);
         setTimeout(() => {
           const resetCards = cards.map((r) => r.slice());
           resetCards[flippedCard1.row][flippedCard1.col].state = "hidden";
@@ -293,6 +303,8 @@ export default function MatchPage() {
   const [isItFirstPlayerTurn, setIsItFirstPlayerTurn] =
     useState<boolean>(false);
   const [cards, setCards] = useState<CardDetails[][]>([]);
+  const [player1Score, setPlayer1Score] = useState<number>(0); // They are changed in the backend when marking slots as matched
+  const [player2Score, setPlayer2Score] = useState<number>(0); // They are changed in the backend when marking slots as matched
 
   useEffect(() => {
     /* Debugging purpose: remove this block when backend is ready */
@@ -366,6 +378,8 @@ export default function MatchPage() {
       setCards(grid);
     };
     fetchSlots();
+    setPlayer1Score(match.player1Score);
+    setPlayer2Score(match.player2Score);
   }, [match]);
 
   useEffect(() => {
@@ -408,6 +422,8 @@ export default function MatchPage() {
       <HeaderMatch
         currentMatch={currentMatch}
         isItFirstPlayerTurn={isItFirstPlayerTurn}
+        player1Score={player1Score}
+        player2Score={player2Score}
       />
       <MatchContent
         cards={cards}
